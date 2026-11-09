@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{# 球經後台：只管理自己系所的系隊 #}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.2/echarts.min.js" integrity="sha512-ppWbHq6q2f7HAwS481w6qikuC0XEeBnmkRg6KWnWg3zSIbJwWWBgsCDMAxzSB7SVqXzWwSYQ2s8TSJKjnaikMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% endblock head %}
+
+{% block home_url %}{{ url_for('manager.playerManager') }}{% endblock home_url %}
+{% block rail_label %}球經後台・{{ me.dname }}{% endblock rail_label %}
+{% block brand_sub %}球經後台{% endblock brand_sub %}
+
+{% block nav %}
+    {{ nav_item('manager.playerManager', '球員管理', ['manager.editPlayer', 'manager.playerAttendance']) }}
+    {{ nav_item('manager.eventManager', '活動與點名', ['manager.rollcall']) }}
+    {{ nav_item('manager.venue', '場地查詢') }}
+    {{ nav_item('analysis.dashboard', '資料分析') }}
+{% endblock nav %}

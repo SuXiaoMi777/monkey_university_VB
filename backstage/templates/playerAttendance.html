@@ -1,0 +1,86 @@
+{% extends "backstage.html" %}
+{% from "macros.html" import status_badge, hm, day %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}出缺席明細{% endblock title%}
+
+{% block content%}
+<div class="d-flex flex-wrap justify-content-between align-items-end mb-3 gap-2">
+    <div>
+        <a href="{{ url_for('manager.playerManager') }}" class="small">← 回球員管理</a>
+        <h1 class="page-title mb-0 mt-1">
+            <span class="jersey me-1">{{ player.jerseyno if player.jerseyno is not none else '—' }}</span>
+            {{ player.pname }} 的出缺席明細
+        </h1>
+        <div class="text-muted small mt-1">{{ player.teamname }}・{{ player.dname }}・{{ player.posname }}・{{ player.pstatus }}</div>
+    </div>
+    <form method="get" class="d-flex gap-2">
+        <input type="hidden" name="pid" value="{{ player.pid }}">
+        <input type="month" name="month" value="{{ month }}" class="form-control">
+        <button class="btn btn-primary text-nowrap" type="submit">查詢</button>
+    </form>
+</div>
+
+<!-- 該月小計 -->
+<div class="row g-3 mb-3">
+    {% for s, n in summary.items() %}
+    <div class="col-6 col-md-3">
+        <div class="card card-vb p-3 text-center">
+            <div class="stat-num">{{ n }}</div>
+            <div class="stat-label">{{ status_badge(s) }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card card-vb">
+<div class="card-body">
+<div class="table-responsive">
+<table class="table align-middle">
+    <thead>
+        <tr>
+            <th>日期</th>
+            <th>時間</th>
+            <th>類型</th>
+            <th>場地</th>
+            <th>狀態</th>
+            <th>備註</th>
+            <th class="text-center">修正狀態</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for r in records %}
+        <tr>
+            <td>{{ day(r.eventdate) }}</td>
+            <td>{{ hm(r.starttime) }}</td>
+            <td>{{ r.eventtype }}</td>
+            <td>{{ r.vname }}</td>
+            <td>{{ status_badge(r.astatus) }}</td>
+            <td>{{ r.note or '' }}</td>
+            <td>
+                <!-- F6 修正單筆出席狀態 -->
+                <form method="post" class="d-flex gap-1 justify-content-center">
+                    <input type="hidden" name="pid" value="{{ player.pid }}">
+                    <input type="hidden" name="month" value="{{ month }}">
+                    <input type="hidden" name="eid" value="{{ r.eid }}">
+                    <select name="astatus" class="form-select form-select-sm" style="width:90px">
+                        {% for s in status_list %}
+                        <option value="{{ s }}" {{ 'selected' if s == r.astatus }}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="note" value="{{ r.note or '' }}" class="form-control form-control-sm" placeholder="備註" style="width:140px">
+                    <button class="btn btn-outline-success btn-sm text-nowrap" type="submit">儲存</button>
+                </form>
+            </td>
+        </tr>
+    {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-4">這個月份沒有已舉行的活動紀錄</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+</div>
+{% endblock content%}

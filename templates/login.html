@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}登入｜猴子大學排球系隊{% endblock title %}
+{% block bigword %}<div class="bigword" aria-hidden="true">LOGIN</div>{% endblock bigword %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <div class="eyebrow">
+            <span class="eyebrow-chip">系統登入</span>
+            <span class="eyebrow-chip">管理員・球經・球員</span>
+        </div>
+        <h1 class="hero-title">歡迎回來</h1>
+        <p class="hero-lead">登入後會依照你的身分進入對應的專區。</p>
+        <p class="taglist">
+            <span>系統管理員：體育室帳號</span><span class="sep">,</span>
+            <span>球經：系所球經帳號</span><span class="sep">,</span>
+            <span>球員：學號</span>
+        </p>
+    </div>
+
+    <div class="card login-card">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="44" height="44">
+            <h2 class="h4 fw-bold mb-0">登入</h2>
+        </div>
+        <form method="post" action="{{ url_for('api.login') }}">
+            <div class="mb-3">
+                <label class="form-label" for="account">帳號</label>
+                <input type="text" class="form-control" id="account" name="account" placeholder="球員請輸入學號" autocomplete="username" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="password">密碼</label>
+                <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
+            </div>
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-danger py-2 mb-3">{% for m in messages %}{{ m }}{% endfor %}</div>
+            {% endif %}
+            {% endwith %}
+            <button type="submit" class="btn-arrow">登入</button>
+        </form>
+        <p class="login-hint mt-3 mb-0">球員帳號由各系球經建檔時開通；球經帳號由體育室建立。</p>
+    </div>
+</section>
+{% endblock content %}

@@ -1,0 +1,137 @@
+{# 統計圖表分頁：球經資料分析頁與系統管理員總覽共用 #}
+<div class="card card-vb p-3">
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="tab-pos" data-bs-toggle="tab" data-bs-target="#pane-pos" type="button" role="tab">位置戰力分佈</button>
+            <button class="nav-link" id="tab-rank" data-bs-toggle="tab" data-bs-target="#pane-rank" type="button" role="tab">出席率排行</button>
+            <button class="nav-link" id="tab-trend" data-bs-toggle="tab" data-bs-target="#pane-trend" type="button" role="tab">每月出席率</button>
+        </div>
+    </nav>
+
+    <div class="tab-content pt-3" id="nav-tabContent">
+        <!-- F14 位置戰力分佈 -->
+        <div class="tab-pane fade show active" id="pane-pos" role="tabpanel">
+            <div id="chartPos" style="width:100%;height:420px"></div>
+        </div>
+
+        <!-- F16 出席率排行 -->
+        <div class="tab-pane fade" id="pane-rank" role="tabpanel">
+            <form method="get" class="d-flex gap-2 mb-3" style="max-width:360px">
+                <select name="tid" class="form-select" onchange="this.form.submit()">
+                    {% for t in teams %}
+                    <option value="{{ t.tid }}" {{ 'selected' if t.tid == tid }}>{{ t.teamname }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="tab" value="rank">
+            </form>
+            <div class="row g-3">
+                <div class="col-lg-5">
+                    <div id="chartRank" style="width:100%;height:{{ 60 + ranking|length * 34 }}px"></div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th class="text-center">名次</th><th>球員</th><th>位置</th>
+                                <th class="text-end">應到</th><th class="text-end">實到</th>
+                                <th class="text-end">遲到</th><th class="text-end">請假</th><th class="text-end">缺席</th>
+                                <th class="text-end">出席率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for r in ranking %}
+                            <tr>
+                                <td class="text-center">{{ r.rank }}</td>
+                                <td><span class="jersey me-1">{{ r.jerseyno }}</span>{{ r.pname }}</td>
+                                <td>{{ r.posname }}</td>
+                                <td class="text-end">{{ r.expected_cnt }}</td>
+                                <td class="text-end">{{ r.attended_cnt }}</td>
+                                <td class="text-end">{{ r.late_cnt }}</td>
+                                <td class="text-end">{{ r.leave_cnt }}</td>
+                                <td class="text-end">{{ r.absent_cnt }}</td>
+                                <td class="text-end fw-bold">{{ r.attendance_rate }}%</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="9" class="text-center text-muted py-4">本學期尚無出席紀錄</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                    <p class="small text-muted">實到＝出席＋遲到；已取消與尚未舉行的活動不計入。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 每月出席率趨勢 -->
+        <div class="tab-pane fade" id="pane-trend" role="tabpanel">
+            <div id="chartTrend" style="width:100%;height:420px"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+  var palette = ['#2c5e70', '#e8705e', '#557f95', '#1c2024', '#d9b77e'];
+
+  // F14 各隊每個位置的人數（分組長條圖）
+  var chartPos = echarts.init(document.getElementById('chartPos'));
+  var posSeries = {{ position_series|tojson }};
+  chartPos.setOption({
+    color: palette,
+    title: { text: '各隊場上位置人數', left: 0, textStyle: { fontSize: 16 } },
+    tooltip: { trigger: 'axis' },
+    legend: { top: 0, right: 0 },
+    grid: { left: 40, right: 20, top: 60, bottom: 30 },
+    xAxis: { type: 'category', data: {{ positions|tojson }} },
+    yAxis: { type: 'value', minInterval: 1, name: '人數' },
+    series: posSeries.map(function (s) {
+      return { name: s.name, type: 'bar', data: s.data, barMaxWidth: 36,
+               label: { show: true, position: 'top' } };
+    })
+  });
+
+  // F16 出席率排行（橫條圖）
+  var chartRank = echarts.init(document.getElementById('chartRank'));
+  chartRank.setOption({
+    color: ['#2c5e70'],
+    tooltip: { formatter: '{b}：{c}%' },
+    grid: { left: 90, right: 50, top: 10, bottom: 30 },
+    xAxis: { type: 'value', max: 100, axisLabel: { formatter: '{value}%' } },
+    yAxis: { type: 'category', data: {{ rank_names|tojson }}, inverse: true },
+    series: [{ type: 'bar', data: {{ rank_rates|tojson }}, barMaxWidth: 20,
+               label: { show: true, position: 'right', formatter: '{c}%' } }]
+  });
+
+  // 每月出席率（折線圖）
+  var chartTrend = echarts.init(document.getElementById('chartTrend'));
+  var trendSeries = {{ trend_series|tojson }};
+  chartTrend.setOption({
+    color: palette,
+    title: { text: '各隊每月出席率', left: 0, textStyle: { fontSize: 16 } },
+    tooltip: { trigger: 'axis', valueFormatter: function (v) { return v + '%'; } },
+    legend: { top: 0, right: 0 },
+    grid: { left: 50, right: 30, top: 60, bottom: 30 },
+    xAxis: { type: 'category', data: {{ months|tojson }} },
+    yAxis: { type: 'value', max: 100, axisLabel: { formatter: '{value}%' },
+             min: function (v) { return Math.max(0, Math.floor(v.min / 10) * 10 - 10); } },
+    series: trendSeries.map(function (s) {
+      return { name: s.name, type: 'line', data: s.data, symbolSize: 8,
+               label: { show: true, formatter: '{c}%' } };
+    })
+  });
+
+  // 分頁切換後圖表才看得到，需重新計算大小
+  document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function (btn) {
+    btn.addEventListener('shown.bs.tab', function () {
+      chartPos.resize(); chartRank.resize(); chartTrend.resize();
+    });
+  });
+  window.addEventListener('resize', function () {
+    chartPos.resize(); chartRank.resize(); chartTrend.resize();
+  });
+
+  // 從隊伍選單回來時，直接打開「出席率排行」分頁
+  if (new URLSearchParams(location.search).get('tab') === 'rank') {
+    new bootstrap.Tab(document.getElementById('tab-rank')).show();
+  }
+</script>

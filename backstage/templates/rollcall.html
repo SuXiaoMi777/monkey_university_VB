@@ -1,0 +1,82 @@
+{% extends "backstage.html" %}
+{% from "macros.html" import hm, day %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}點名{% endblock title %}
+
+{% block content %}
+<a href="{{ url_for('manager.eventManager', month=event.eventdate.strftime('%Y-%m')) }}" class="small">← 回活動列表</a>
+<h1 class="page-title mt-1 mb-1">點名：{{ event.teamname }} {{ event.eventtype }}</h1>
+<p class="text-muted mb-3">{{ day(event.eventdate) }} {{ hm(event.starttime) }}–{{ hm(event.endtime) }}・{{ event.vname }}</p>
+
+{% if event.estatus != '正常' %}
+<div class="alert alert-warning">這場活動已取消，不需要點名。</div>
+{% else %}
+<div class="card card-vb">
+<div class="card-body">
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+    <span class="text-muted small">應到 {{ roster|length }} 人；已事先請假的球員會自動帶入</span>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-success btn-sm" onclick="setAll('出席')">未登記的全部設為出席</button>
+    </div>
+</div>
+
+<form method="post" class="rollcall">
+<input type="hidden" name="eid" value="{{ event.eid }}">
+<div class="table-responsive">
+<table class="table align-middle">
+    <thead>
+        <tr>
+            <th class="text-center">背號</th>
+            <th>姓名</th>
+            <th>位置</th>
+            <th>出席狀態</th>
+            <th>備註</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% set colors = {'出席': 'success', '遲到': 'warning', '請假': 'primary', '缺席': 'danger'} %}
+    {% for p in roster %}
+        <tr>
+            <td class="text-center"><span class="jersey">{{ p.jerseyno if p.jerseyno is not none else '—' }}</span></td>
+            <td class="fw-bold">{{ p.pname }}<input type="hidden" name="pid" value="{{ p.pid }}"></td>
+            <td>{{ p.posname }}</td>
+            <td>
+                <div class="btn-group btn-group-sm" role="group" aria-label="{{ p.pname }} 出席狀態">
+                    {% for s in status_list %}
+                    <input type="radio" class="btn-check" name="status_{{ p.pid }}" id="s_{{ p.pid }}_{{ loop.index }}"
+                           value="{{ s }}" {{ 'checked' if p.astatus == s }} required>
+                    <label class="btn btn-outline-{{ colors[s] }}" for="s_{{ p.pid }}_{{ loop.index }}">{{ s }}</label>
+                    {% endfor %}
+                </div>
+            </td>
+            <td><input type="text" class="form-control form-control-sm" name="note_{{ p.pid }}" value="{{ p.note or '' }}" maxlength="100" placeholder="選填"></td>
+        </tr>
+    {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">這場活動沒有應到的球員</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+<div class="text-center">
+    <button type="submit" class="btn btn-success px-4">儲存點名結果</button>
+</div>
+</form>
+</div>
+</div>
+{% endif %}
+
+<script>
+    // 尚未選擇狀態的球員一鍵設為「出席」，已選的（例：事先請假）不會被覆蓋
+    function setAll(status) {
+        $('input[type=hidden][name=pid]').each(function () {
+            var pid = $(this).val();
+            if (!$('input[name="status_' + pid + '"]:checked').length) {
+                $('input[name="status_' + pid + '"][value="' + status + '"]').prop('checked', true);
+            }
+        });
+    }
+</script>
+{% endblock content %}

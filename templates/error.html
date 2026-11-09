@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}找不到頁面｜猴子大學排球系隊{% endblock title %}
+{% block bigword %}<div class="bigword" aria-hidden="true">404</div>{% endblock bigword %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <div class="eyebrow"><span class="eyebrow-chip">找不到頁面</span></div>
+        <h1 class="hero-title">球飛出界了</h1>
+        <p class="hero-lead">{{ message }}</p>
+        <a href="javascript:history.back()" class="btn-arrow">回上一頁</a>
+    </div>
+</section>
+{% endblock content %}

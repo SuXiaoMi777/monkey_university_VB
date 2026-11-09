@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{# 球員前台：自己的出席、請假、個人資料 #}
+
+{% block home_url %}{{ url_for('player.home') }}{% endblock home_url %}
+{% block rail_label %}球員專區・{{ me.name }}{% endblock rail_label %}
+{% block brand_sub %}球員專區{% endblock brand_sub %}
+
+{% block nav %}
+    {{ nav_item('player.home', '我的出席') }}
+    {{ nav_item('player.leave', '請假') }}
+    {{ nav_item('player.profile', '個人資料') }}
+{% endblock nav %}

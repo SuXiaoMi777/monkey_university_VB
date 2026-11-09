@@ -1,0 +1,85 @@
+{% extends "frontstage.html" %}
+{% from "macros.html" import status_badge, hm, day %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}我的出席{% endblock title%}
+
+{% block content%}
+<div class="d-flex align-items-center gap-3 mb-3">
+    <span class="jersey fs-4 px-3">{{ player.jerseyno if player.jerseyno is not none else '—' }}</span>
+    <div>
+        <h1 class="page-title mb-0">{{ player.pname }}</h1>
+        <div class="text-muted small">{{ player.teamname }}・{{ player.dname }}・{{ player.posname }}</div>
+    </div>
+</div>
+
+<!-- F15 本學期出席率 -->
+<div class="card card-vb p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">{{ semester }} 學期出席統計</h5>
+        <span class="small text-muted">實到＝出席＋遲到</span>
+    </div>
+    {% if stat %}
+    <div class="row g-3 text-center align-items-center">
+        <div class="col-12 col-md-3">
+            <div class="stat-num" style="font-size:44px">{{ stat.attendance_rate }}<small class="fs-5">%</small></div>
+            <div class="stat-label">出席率</div>
+        </div>
+        <div class="col-4 col-md-2"><div class="stat-num">{{ stat.expected_cnt }}</div><div class="stat-label">應到</div></div>
+        <div class="col-4 col-md-2"><div class="stat-num">{{ stat.attended_cnt }}</div><div class="stat-label">實到</div></div>
+        <div class="col-4 col-md-5">
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <span>{{ status_badge('遲到') }} {{ stat.late_cnt }}</span>
+                <span>{{ status_badge('請假') }} {{ stat.leave_cnt }}</span>
+                <span>{{ status_badge('缺席') }} {{ stat.absent_cnt }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="progress mt-3" style="height:10px">
+        <div class="progress-bar" role="progressbar" style="width: {{ stat.attendance_rate }}%; background-color:var(--teal)"
+             aria-valuenow="{{ stat.attendance_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">本學期還沒有出席紀錄。</p>
+    {% endif %}
+</div>
+
+<!-- F12 月份明細 -->
+<div class="card card-vb">
+<div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h5 class="mb-0">出缺席明細</h5>
+        <form method="get" class="d-flex gap-2">
+            <input type="month" name="month" value="{{ month }}" class="form-control form-control-sm">
+            <button class="btn btn-primary btn-sm text-nowrap" type="submit">查詢</button>
+        </form>
+    </div>
+    <div class="d-flex gap-3 flex-wrap mb-2 small">
+        {% for s, n in summary.items() %}<span>{{ status_badge(s) }} {{ n }} 次</span>{% endfor %}
+    </div>
+    <div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr><th>日期</th><th>時間</th><th>類型</th><th>場地</th><th>狀態</th><th>備註</th></tr>
+        </thead>
+        <tbody>
+        {% for r in records %}
+            <tr>
+                <td>{{ day(r.eventdate) }}</td>
+                <td>{{ hm(r.starttime) }}</td>
+                <td>{{ r.eventtype }}</td>
+                <td>{{ r.vname }}</td>
+                <td>{{ status_badge(r.astatus) }}</td>
+                <td>{{ r.note or '' }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">這個月份沒有已舉行的活動紀錄</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+</div>
+{% endblock content%}

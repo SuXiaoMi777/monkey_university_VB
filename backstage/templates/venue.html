@@ -1,0 +1,63 @@
+{% extends "backstage.html" %}
+{% from "macros.html" import status_badge, hm, day %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}場地查詢{% endblock title %}
+
+{% block content %}
+<h1 class="page-title mb-3">場地查詢</h1>
+
+<form method="get" class="card card-vb p-3 mb-3 filter-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+            <label class="form-label small text-muted mb-1">場地</label>
+            <select name="vid" class="form-select">
+                {% for v in venues %}
+                <option value="{{ v.vid }}" {{ 'selected' if v.vid == vid }}>{{ v.vname }}（{{ v.location }}）</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-8 col-md-3">
+            <label class="form-label small text-muted mb-1">起始日期（顯示 7 天）</label>
+            <input type="date" name="date" value="{{ start }}" class="form-control">
+        </div>
+        <div class="col-4 col-md-2">
+            <button type="submit" class="btn btn-primary w-100">查詢</button>
+        </div>
+    </div>
+</form>
+
+<div class="card card-vb">
+<div class="card-body">
+<div class="table-responsive">
+<table class="table align-middle">
+    <thead>
+        <tr>
+            <th>日期</th>
+            <th>時段</th>
+            <th>使用隊伍</th>
+            <th>活動類型</th>
+            <th>狀態</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for e in schedule %}
+        <tr class="{{ 'row-cancelled' if e.estatus == '已取消' }}">
+            <td>{{ day(e.eventdate) }}</td>
+            <td>{{ hm(e.starttime) }}–{{ hm(e.endtime) }}</td>
+            <td>{{ e.teamname }}{% if e.did == my_did %} <span class="badge bg-warning text-dark">本系</span>{% endif %}</td>
+            <td>{{ e.eventtype }}</td>
+            <td>{% if e.estatus == '已取消' %}{{ status_badge('已取消') }}{% else %}<span class="text-success small">已預約</span>{% endif %}</td>
+        </tr>
+    {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">這 7 天內此場地沒有任何活動，可以安排</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+<p class="small text-muted mb-0">場地由各系隊共用；已取消的活動不佔用場地，建立活動時若時段重疊，系統會自動擋下。</p>
+</div>
+</div>
+{% endblock content %}

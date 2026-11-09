@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="猴子大學排球系隊 logo：縮成一顆球的小猴子">
+  <!-- 尾巴：從右下繞出來捲一圈 -->
+  <path d="M150 158 C176 170 190 150 182 132 C176 120 160 124 164 136 C167 144 176 141 175 135"
+        fill="none" stroke="#3d2418" stroke-width="13" stroke-linecap="round"/>
+  <path d="M150 158 C176 170 190 150 182 132 C176 120 160 124 164 136 C167 144 176 141 175 135"
+        fill="none" stroke="#9a6440" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- 耳朵 -->
+  <circle cx="40" cy="96" r="19" fill="#9a6440" stroke="#3d2418" stroke-width="5"/>
+  <circle cx="40" cy="96" r="10" fill="#f6cfa2"/>
+  <circle cx="160" cy="96" r="19" fill="#9a6440" stroke="#3d2418" stroke-width="5"/>
+  <circle cx="160" cy="96" r="10" fill="#f6cfa2"/>
+
+  <!-- 身體：縮成一顆圓滾滾的球 -->
+  <circle cx="100" cy="110" r="68" fill="#9a6440" stroke="#3d2418" stroke-width="5"/>
+
+  <!-- 球面受光 -->
+  <path d="M52 70 C62 54 78 46 92 44" fill="none" stroke="#c48a5c" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+
+  <!-- 頭頂的一撮毛 -->
+  <path d="M96 44 C92 32 104 26 108 34 C100 32 100 40 104 44" fill="#9a6440" stroke="#3d2418" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- 臉 -->
+  <g fill="#f6cfa2">
+    <circle cx="82" cy="94" r="24"/>
+    <circle cx="118" cy="94" r="24"/>
+    <ellipse cx="100" cy="118" rx="32" ry="23"/>
+  </g>
+
+  <!-- 眼睛 -->
+  <ellipse cx="85" cy="96" rx="7" ry="8.5" fill="#2b1a10"/>
+  <ellipse cx="115" cy="96" rx="7" ry="8.5" fill="#2b1a10"/>
+  <circle cx="87.5" cy="92.5" r="2.6" fill="#fff"/>
+  <circle cx="117.5" cy="92.5" r="2.6" fill="#fff"/>
+
+  <!-- 腮紅 -->
+  <ellipse cx="72" cy="114" rx="7.5" ry="4.5" fill="#f28b82" opacity=".75"/>
+  <ellipse cx="128" cy="114" rx="7.5" ry="4.5" fill="#f28b82" opacity=".75"/>
+
+  <!-- 鼻子、嘴巴 -->
+  <circle cx="96" cy="111" r="1.9" fill="#3d2418"/>
+  <circle cx="104" cy="111" r="1.9" fill="#3d2418"/>
+  <path d="M90 120 Q100 130 110 120" fill="none" stroke="#3d2418" stroke-width="3.2" stroke-linecap="round"/>
+
+  <!-- 抱著球的小手、小腳 -->
+  <ellipse cx="62" cy="150" rx="11" ry="8" fill="#f6cfa2" stroke="#3d2418" stroke-width="3.5" transform="rotate(-28 62 150)"/>
+  <ellipse cx="138" cy="150" rx="11" ry="8" fill="#f6cfa2" stroke="#3d2418" stroke-width="3.5" transform="rotate(28 138 150)"/>
+  <ellipse cx="86" cy="175" rx="10" ry="7" fill="#f6cfa2" stroke="#3d2418" stroke-width="3.5"/>
+  <ellipse cx="114" cy="175" rx="10" ry="7" fill="#f6cfa2" stroke="#3d2418" stroke-width="3.5"/>
+</svg>

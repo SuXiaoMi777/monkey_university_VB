@@ -1,0 +1,52 @@
+{% extends "frontstage.html" %}
+{% from "macros.html" import status_badge, hm, day %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}請假{% endblock title%}
+
+{% block content%}
+<h1 class="page-title mb-1">請假</h1>
+<p class="text-muted mb-3">只能對尚未舉行的活動請假；活動開始前都可以取消請假。</p>
+
+<div class="card card-vb">
+<div class="card-body">
+<div class="table-responsive">
+<table class="table align-middle">
+    <thead>
+        <tr><th>日期</th><th>時間</th><th>類型</th><th>場地</th><th>目前狀態</th><th style="min-width:300px">請假</th></tr>
+    </thead>
+    <tbody>
+    {% for e in events %}
+        <tr>
+            <td class="text-nowrap">{{ day(e.eventdate) }}</td>
+            <td class="text-nowrap">{{ hm(e.starttime) }}–{{ hm(e.endtime) }}</td>
+            <td>{{ e.eventtype }}</td>
+            <td>{{ e.vname }}</td>
+            <td>
+                {% if e.astatus == '請假' %}{{ status_badge('請假') }}<div class="small text-muted">{{ e.note }}</div>
+                {% else %}<span class="small text-muted">預定出席</span>{% endif %}
+            </td>
+            <td>
+                <form method="post" class="d-flex gap-2">
+                    <input type="hidden" name="eid" value="{{ e.eid }}">
+                    {% if e.astatus == '請假' %}
+                        <button type="submit" name="cancel" value="1" class="btn btn-outline-secondary btn-sm"
+                            onclick="return confirm('確定取消這場活動的請假嗎？')">取消請假</button>
+                    {% else %}
+                        <input type="text" name="note" class="form-control form-control-sm" placeholder="請假原因" maxlength="100" required>
+                        <button type="submit" class="btn btn-primary btn-sm text-nowrap">送出</button>
+                    {% endif %}
+                </form>
+            </td>
+        </tr>
+    {% else %}
+        <tr><td colspan="6" class="text-center text-muted py-4">目前沒有即將舉行的活動</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+</div>
+{% endblock content%}

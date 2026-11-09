@@ -1,0 +1,206 @@
+{% extends "backstage.html" %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}球員管理{% endblock title %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="page-title mb-0">球員管理</h1>
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPlayer">＋ 新增球員</button>
+</div>
+
+<!-- F11 綜合條件查詢 -->
+<form method="get" class="card card-vb p-3 mb-3 filter-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted mb-1">隊伍</label>
+            <select name="tid" class="form-select">
+                <option value="">全部</option>
+                {% for t in teams %}
+                <option value="{{ t.tid }}" {{ 'selected' if filters.tid == t.tid|string }}>{{ t.teamname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted mb-1">系所</label>
+            <select name="did" class="form-select">
+                <option value="">全部</option>
+                {% for d in departments %}
+                <option value="{{ d.did }}" {{ 'selected' if filters.did == d.did }}>{{ d.dname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted mb-1">位置</label>
+            <select name="posid" class="form-select">
+                <option value="">全部</option>
+                {% for p in positions %}
+                <option value="{{ p.posid }}" {{ 'selected' if filters.posid == p.posid }}>{{ p.posname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small text-muted mb-1">狀態</label>
+            <select name="status" class="form-select">
+                {% for s in ['在隊', '退隊', '畢業'] %}
+                <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s }}</option>
+                {% endfor %}
+                <option value="" {{ 'selected' if filters.status == '' }}>全部</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">查詢</button>
+            <a href="{{ url_for('manager.playerManager') }}" class="btn btn-outline-secondary">清除</a>
+        </div>
+    </div>
+</form>
+
+<div class="card card-vb">
+<div class="card-body">
+<p class="text-muted small mb-2">共 {{ players|length }} 位球員</p>
+<form method="post" action="">
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th class="text-center">背號</th>
+            <th>姓名</th>
+            <th>學號</th>
+            <th>隊伍</th>
+            <th>系所</th>
+            <th>位置</th>
+            <th>聯絡電話</th>
+            <th>入隊日期</th>
+            <th>狀態</th>
+            <th class="text-center">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for p in players %}
+        <tr>
+            <td class="text-center"><span class="jersey">{{ p.jerseyno if p.jerseyno is not none else '—' }}</span></td>
+            <td class="fw-bold">{{ p.pname }}</td>
+            <td>{{ p.pid }}</td>
+            <td>{{ p.teamname }}</td>
+            <td>{{ p.dname }}</td>
+            <td>{% if p.posid %}{{ p.posname }}{% else %}<span class="text-warning">未指定</span>{% endif %}</td>
+            <td>{{ p.phone or '' }}</td>
+            <td>{{ p.joindate }}</td>
+            <td>
+                {{ p.pstatus }}
+                {% if p.leavedate %}<div class="small text-muted">{{ p.leavedate }}</div>{% endif %}
+            </td>
+            <td class="text-center text-nowrap">
+                <a class="btn btn-outline-primary btn-sm" href="{{ url_for('manager.playerAttendance', pid=p.pid) }}">出缺席</a>
+                {% if p.pstatus == '在隊' %}
+                <button type="submit" name="edit" value="{{ p.pid }}" class="btn btn-outline-success btn-sm">編輯</button>
+                <div class="btn-group" role="group" aria-label="註銷">
+                    <button class="btn btn-outline-danger btn-sm" type="submit" name="retire" value="{{ p.pid }}:退隊"
+                        onclick="return confirm('確定將 {{ p.pname }} 註銷為「退隊」嗎？帳號將停用，出席紀錄會保留。')">退隊</button>
+                    <button class="btn btn-outline-danger btn-sm" type="submit" name="retire" value="{{ p.pid }}:畢業"
+                        onclick="return confirm('確定將 {{ p.pname }} 註銷為「畢業」嗎？帳號將停用，出席紀錄會保留。')">畢業</button>
+                </div>
+                {% endif %}
+            </td>
+        </tr>
+    {% else %}
+        <tr><td colspan="10" class="text-center text-muted py-4">沒有符合條件的球員</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</form>
+</div>
+</div>
+
+<!-- F1 新增球員 -->
+<form method="post" action="{{ url_for('manager.addPlayer') }}">
+<div class="modal fade" id="addPlayer" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addPlayerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPlayerLabel">新增球員</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">學號（同時作為登入帳號）</label>
+                        <input type="text" class="form-control" name="pid" maxlength="10" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">姓名</label>
+                        <input type="text" class="form-control" name="pname" maxlength="20" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">隊伍</label>
+                        <select class="form-select" name="tid" id="newTeam" required>
+                            {% for t in teams %}
+                            <option value="{{ t.tid }}" data-gender="{{ t.tgender }}">{{ t.teamname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">性別</label>
+                        <select class="form-select" name="gender" id="newGender" required>
+                            <option value="M">男</option>
+                            <option value="F">女</option>
+                        </select>
+                        <div class="form-text">依隊伍自動帶入</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">背號</label>
+                        <input type="number" class="form-control" name="jerseyno" min="0" max="99">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">就讀系所</label>
+                        <select class="form-select" name="did" required>
+                            {% for d in departments %}
+                            <option value="{{ d.did }}" {{ 'selected' if d.did == my_did }}>{{ d.college }}／{{ d.dname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">場上位置</label>
+                        <select class="form-select" name="posid">
+                            <option value="">暫不指定</option>
+                            {% for p in positions %}
+                            <option value="{{ p.posid }}">{{ p.posname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">聯絡電話</label>
+                        <input type="text" class="form-control" name="phone" maxlength="15" placeholder="0912-345-678">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">入隊日期</label>
+                        <input type="date" class="form-control" name="joindate" value="{{ today }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">初始密碼</label>
+                        <input type="text" class="form-control" name="password" placeholder="留空則為 player123">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-success">確定新增</button>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+
+<script>
+    // 選隊伍時自動帶入性別（男排／女排）
+    function syncGender() {
+        var g = $('#newTeam option:selected').data('gender');
+        $('#newGender').val(g);
+    }
+    $('#newTeam').on('change', syncGender);
+    syncGender();
+</script>
+{% endblock content %}

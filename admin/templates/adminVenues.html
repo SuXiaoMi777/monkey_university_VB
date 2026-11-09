@@ -1,0 +1,48 @@
+{% extends "admin.html" %}
+{% block title %}場地{% endblock title %}
+{% block content %}
+
+<h1 class="page-title mb-3">場地</h1>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card card-vb">
+        <div class="card-body">
+            <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr><th>編號</th><th>場地名稱</th><th>位置</th><th class="text-end">未來預約</th></tr>
+                </thead>
+                <tbody>
+                {% for v in venues %}
+                    <tr>
+                        <td>{{ v.vid }}</td>
+                        <td class="fw-bold">{{ v.vname }}</td>
+                        <td>{{ v.location or '' }}</td>
+                        <td class="text-end">{{ v.upcoming_cnt }} 場</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-vb">
+        <div class="card-body">
+            <h5 class="mb-3">新增場地</h5>
+            <form method="post">
+                <div class="mb-2">
+                    <input type="text" name="vname" class="form-control" maxlength="30" placeholder="場地名稱" required>
+                </div>
+                <div class="mb-3">
+                    <input type="text" name="location" class="form-control" maxlength="50" placeholder="位置（選填）">
+                </div>
+                <button type="submit" class="btn btn-success w-100">新增</button>
+            </form>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

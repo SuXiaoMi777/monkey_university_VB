@@ -1,0 +1,162 @@
+{% extends "backstage.html" %}
+{% from "macros.html" import status_badge, hm, day %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}活動與點名{% endblock title %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="page-title mb-0">活動與點名</h1>
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addEvent">＋ 建立活動</button>
+</div>
+
+<form method="get" class="card card-vb p-3 mb-3 filter-bar">
+    <div class="row g-2 align-items-end">
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted mb-1">隊伍</label>
+            <select name="tid" class="form-select">
+                <option value="">全部</option>
+                {% for t in teams %}
+                <option value="{{ t.tid }}" {{ 'selected' if filters.tid == t.tid|string }}>{{ t.teamname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small text-muted mb-1">月份</label>
+            <input type="month" name="month" value="{{ filters.month }}" class="form-control">
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">查詢</button>
+            <a href="{{ url_for('manager.eventManager', month='') }}" class="btn btn-outline-secondary text-nowrap">全部月份</a>
+        </div>
+    </div>
+</form>
+
+<div class="card card-vb">
+<div class="card-body">
+<form method="post" action="">
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>日期</th>
+            <th>時間</th>
+            <th>隊伍</th>
+            <th>類型</th>
+            <th>場地</th>
+            <th>狀態</th>
+            <th class="text-center">點名</th>
+            <th class="text-center">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for e in events %}
+        <tr class="{{ 'row-cancelled' if e.estatus == '已取消' }}">
+            <td class="text-nowrap">{{ day(e.eventdate) }}</td>
+            <td class="text-nowrap">{{ hm(e.starttime) }}–{{ hm(e.endtime) }}</td>
+            <td>{{ e.teamname }}</td>
+            <td>{{ e.eventtype }}</td>
+            <td>{{ e.vname }}</td>
+            <td>
+                {% if e.estatus == '已取消' %}{{ status_badge('已取消') }}
+                {% elif e.is_past %}<span class="text-success small">已舉行</span>
+                {% else %}<span class="text-primary small">未開始</span>{% endif %}
+            </td>
+            <td class="text-center">
+                {% if e.estatus == '正常' %}
+                    {% if e.is_past and e.record_cnt > 0 %}
+                        <span class="small text-muted">出席 {{ e.present_cnt }}／{{ e.record_cnt }}</span>
+                    {% elif e.record_cnt > 0 %}
+                        <span class="small text-muted">已有 {{ e.record_cnt }} 筆請假</span>
+                    {% else %}
+                        <span class="small text-muted">尚未點名</span>
+                    {% endif %}
+                {% endif %}
+            </td>
+            <td class="text-center text-nowrap">
+                {% if e.estatus == '正常' %}
+                <button type="submit" name="rollcall" value="{{ e.eid }}" class="btn btn-primary btn-sm">點名</button>
+                <button type="submit" name="cancel" value="{{ e.eid }}" class="btn btn-outline-warning btn-sm"
+                    onclick="return confirm('確定註銷 {{ e.eventdate }} 的活動嗎？註銷後不計入出席率。')">註銷</button>
+                {% endif %}
+                {% if e.record_cnt == 0 %}
+                <button type="submit" name="delete" value="{{ e.eid }}" class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('確定刪除 {{ e.eventdate }} 的活動嗎？刪除後無法復原。')">刪除</button>
+                {% endif %}
+            </td>
+        </tr>
+    {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">這個條件下沒有活動</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</form>
+<p class="small text-muted mb-0">「刪除」只出現在還沒有任何出席紀錄的活動；已點名的活動若取消，請用「註銷」保留紀錄。</p>
+</div>
+</div>
+
+<!-- F2 建立活動 -->
+<form method="post" action="{{ url_for('manager.addEvent') }}">
+<div class="modal fade" id="addEvent" data-bs-backdrop="static" tabindex="-1" aria-labelledby="addEventLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEventLabel">建立活動</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label">隊伍</label>
+                        <select class="form-select" name="tid" required>
+                            {% for t in teams %}
+                            <option value="{{ t.tid }}">{{ t.teamname }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">活動類型</label>
+                        <select class="form-select" name="eventtype" required>
+                            <option value="例行練球">例行練球</option>
+                            <option value="友誼賽">友誼賽</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">日期</label>
+                        <input type="date" class="form-control" name="eventdate" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">學期</label>
+                        <input type="text" class="form-control" name="semester" value="{{ semester }}" maxlength="5" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">開始時間</label>
+                        <input type="time" class="form-control" name="starttime" value="18:30" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">結束時間</label>
+                        <input type="time" class="form-control" name="endtime" value="20:30" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">場地</label>
+                        <select class="form-select" name="vid" required>
+                            {% for v in venues %}
+                            <option value="{{ v.vid }}">{{ v.vname }}（{{ v.location }}）</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">同一場地同時段已有活動時，系統會擋下並提示。</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-success">確定建立</button>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+{% endblock content %}

@@ -1,0 +1,53 @@
+{% extends "admin.html" %}
+{% block title %}全校總覽{% endblock title %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end mb-3">
+    <h1 class="page-title mb-0">全校總覽</h1>
+    <span class="text-muted">{{ semester }} 學期</span>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">系隊數</div><div class="stat-num">{{ team_summary|length }}</div>
+    </div></div>
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">在隊球員</div><div class="stat-num">{{ overview.active_players }}</div>
+    </div></div>
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">已舉行活動</div><div class="stat-num">{{ overview.held_events }}</div>
+    </div></div>
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">全校平均出席率</div><div class="stat-num">{{ overview.overall_rate or 0 }}<small class="fs-6">%</small></div>
+    </div></div>
+</div>
+
+<div class="card card-vb mb-3">
+<div class="card-body">
+    <h5 class="mb-3">各系隊概況</h5>
+    <div class="table-responsive">
+    <table class="table align-middle mb-0">
+        <thead>
+            <tr><th>系所</th><th>隊伍</th><th class="text-end">在隊球員</th><th class="text-end">已舉行活動</th><th class="text-end">出席率</th></tr>
+        </thead>
+        <tbody>
+        {% for t in team_summary %}
+            <tr>
+                <td>{{ t.dname }}</td>
+                <td class="fw-bold">{{ t.teamname }}</td>
+                <td class="text-end">{{ t.active_players }}</td>
+                <td class="text-end">{{ t.held_events }}</td>
+                <td class="text-end">{{ (t.attendance_rate ~ '%') if t.attendance_rate is not none else '—' }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">還沒有任何系隊，請先到「系所與系隊」新增</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+</div>
+
+{% if teams %}{% include "_charts.html" %}{% endif %}
+
+{% endblock content %}

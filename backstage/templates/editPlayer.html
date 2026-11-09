@@ -1,0 +1,67 @@
+{% extends "backstage.html" %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}編輯球員{% endblock title%}
+
+{% block content%}
+<h1 class="page-title mb-3">編輯球員：{{ data.pname }}</h1>
+
+<div class="card card-vb">
+<div class="card-body">
+<form method="post" action="{{ url_for('manager.editPlayer') }}">
+    <table class="table table-bordered mb-4">
+      <tr>
+        <th width="20%">學號</th>
+        <td><input class="form-control" type="text" value="{{ data.pid }}" name="pid" readonly style="background:#e9ecef"></td>
+      </tr>
+      <tr>
+        <th>隊伍</th>
+        <td><input class="form-control" type="text" value="{{ data.teamname }}" readonly style="background:#e9ecef"></td>
+      </tr>
+      <tr>
+        <th>姓名</th>
+        <td><input class="form-control" type="text" value="{{ data.pname }}" name="pname" maxlength="20" required></td>
+      </tr>
+      <tr>
+        <th>背號</th>
+        <td>
+          <input class="form-control" type="number" value="{{ data.jerseyno if data.jerseyno is not none }}" name="jerseyno" min="0" max="99">
+          <div class="form-text">同一隊的在隊球員不能重複</div>
+        </td>
+      </tr>
+      <tr>
+        <th>系所（轉系）</th>
+        <td>
+          <select class="form-select" name="did" required>
+            {% for d in departments %}
+            <option value="{{ d.did }}" {{ 'selected' if d.did == data.did }}>{{ d.college }}／{{ d.dname }}</option>
+            {% endfor %}
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <th>場上位置</th>
+        <td>
+          <select class="form-select" name="posid">
+            <option value="" {{ 'selected' if not data.posid }}>暫不指定</option>
+            {% for p in positions %}
+            <option value="{{ p.posid }}" {{ 'selected' if p.posid == data.posid }}>{{ p.posname }}</option>
+            {% endfor %}
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <th>聯絡電話</th>
+        <td><input class="form-control" type="text" value="{{ data.phone or '' }}" name="phone" maxlength="15"></td>
+      </tr>
+    </table>
+    <div class="text-center">
+        <button class="btn btn-success" type="submit">確定修改</button>
+        <a href="{{ url_for('manager.playerManager') }}" class="btn btn-outline-secondary">回球員管理</a>
+    </div>
+</form>
+</div>
+</div>
+{% endblock content%}

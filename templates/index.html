@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}猴子大學排球系隊管理系統{% endblock title %}
+{% block bigword %}<div class="bigword" aria-hidden="true">VOLLEY</div>{% endblock bigword %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <div class="eyebrow">
+            <span class="eyebrow-chip">系隊管理系統</span>
+            {% if semester %}<span class="eyebrow-chip">{{ semester }} 學期</span>{% endif %}
+        </div>
+        <h1 class="hero-title">猴子大學排球系隊</h1>
+        <p class="hero-lead">
+            記錄各系排球隊的隊員、練球、比賽與出席。體育室管理系隊與場地，
+            各系球經管理自己的隊伍，球員隨時查看出席率、事先請假。
+        </p>
+        <div id="teams">
+            <p class="hero-label">目前系隊（{{ teams|length }}）</p>
+            <p class="taglist">
+                {% for t in teams %}<span>{{ t.teamname }}</span>{% if not loop.last %}<span class="sep">,</span>{% endif %}{% else %}尚未建立系隊{% endfor %}
+            </p>
+            <p class="hero-label mt-2">功能</p>
+            <p class="taglist">
+                <span>球員建檔</span><span class="sep">,</span><span>練球與比賽排程</span><span class="sep">,</span><span>場地預約與衝突檢查</span><span class="sep">,</span><span>批次點名</span><span class="sep">,</span><span>線上請假</span><span class="sep">,</span><span>出席率排行</span><span class="sep">,</span><span>位置戰力分佈</span><span class="sep">,</span><span>全校統計</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="darkcard">
+        <div class="darkcard-top">
+            <strong>MONKEY.VB</strong>
+            <div class="darkcard-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
+        <img class="darkcard-mascot" src="{{ url_for('static', filename='img/logo.svg') }}" alt="">
+        <div class="darkcard-copy">每一次練球，<br>都算數。<span>出席、請假、統計，一次搞定。</span></div>
+        <a href="{{ url_for('api.login') }}" class="btn-arrow">登入系統</a>
+        <div class="darkcard-word">MONKEY VB</div>
+    </div>
+</section>
+{% endblock content %}

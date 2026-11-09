@@ -1,0 +1,96 @@
+{#
+  共用版型：三種角色（系統管理員、球經、球員）的頁面都繼承這個檔案。
+  版面參考 MUUUUU.ORG：左側直立側欄、虛線分隔的頂列、細線分隔的導覽、背景光暈與大字。
+  子版型（admin.html / backstage.html / frontstage.html）要提供：
+    block rail_label  側欄上的直排文字
+    block nav         導覽列項目（用 nav_item 巨集）
+    block home_url    點 logo 回到的網址
+#}
+{% from "macros.html" import flashes %}
+{% macro nav_item(endpoint, label, also=[]) -%}
+  {% set ep = request.endpoint or '' %}
+  <a class="topnav-link {{ 'is-active' if ep == endpoint or ep in also }}" href="{{ url_for(endpoint) }}">{{ label }}</a>
+{%- endmacro %}
+{# 每個頁面背景的淡色大字 #}
+{% set bg_words = {
+  'manager.playerManager': 'PLAYERS', 'manager.editPlayer': 'PLAYER', 'manager.playerAttendance': 'RECORD',
+  'manager.eventManager': 'EVENTS', 'manager.rollcall': 'ROLL CALL', 'manager.venue': 'COURTS',
+  'analysis.dashboard': 'STATS', 'admin.overview': 'SCHOOL', 'admin.teams': 'TEAMS',
+  'admin.managers': 'STAFF', 'admin.venues': 'COURTS', 'player.home': 'MY GAME',
+  'player.leave': 'LEAVE', 'player.profile': 'PROFILE'} %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/template.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <title>{% block title %}{% endblock title %}｜猴子大學排球系隊</title>
+    {% endblock head %}
+</head>
+<body class="app">
+    <!-- 背景光暈 -->
+    <div class="glow glow-coral" aria-hidden="true"></div>
+    <div class="glow glow-slate" aria-hidden="true"></div>
+
+    <!-- 左側直立側欄 -->
+    <aside class="rail">
+        <a href="{% block home_url %}{{ url_for('index') }}{% endblock home_url %}" class="rail-logo" aria-label="回首頁">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="">
+        </a>
+        <div class="rail-label">{% block rail_label %}猴子大學排球系隊{% endblock rail_label %}</div>
+        <a href="{{ url_for('api.logout') }}" class="rail-logout" title="登出系統">登出</a>
+    </aside>
+
+    <div class="shell">
+        <!-- 頂列：一句說明 + 身分方塊 -->
+        <header class="topline">
+            <p class="topline-text">猴子大學各系排球隊的隊員、練球與出席紀錄，都在這裡。</p>
+            <div class="boxgroup">
+                <span class="boxgroup-item">{{ me.name }}</span>
+                {% if me.dname %}<span class="boxgroup-item">{{ me.dname }}</span>{% endif %}
+                <a class="boxgroup-item" href="{{ url_for('api.logout') }}">登出</a>
+            </div>
+        </header>
+
+        <!-- 品牌列 + 導覽 -->
+        <nav class="brandbar" aria-label="主要導覽">
+            <a class="brand" href="{{ self.home_url() }}">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="brand-logo">
+                <span class="brand-name">MONKEY<span class="brand-dot">.</span>VB</span>
+                <span class="brand-sub">{% block brand_sub %}{% endblock brand_sub %}</span>
+            </a>
+            <div class="topnav">
+                {% block nav %}{% endblock nav %}
+            </div>
+        </nav>
+
+        <main class="page">
+            {% set word = bg_words.get(request.endpoint) %}
+            {% if word %}<div class="bigword" aria-hidden="true">{{ word }}</div>{% endif %}
+            <div class="page-inner">
+                <div class="eyebrow">
+                    <span class="eyebrow-chip">{{ self.brand_sub() }}</span>
+                    {% if me.dname %}<span class="eyebrow-chip">{{ me.dname }}</span>{% endif %}
+                </div>
+                {{ flashes() }}
+                {% block content %}
+                {% endblock content %}
+            </div>
+        </main>
+
+        <footer class="foot">
+            <span>© 猴子大學排球系隊管理系統</span>
+            <span>資料庫系統期末專題</span>
+        </footer>
+    </div>
+</body>
+</html>

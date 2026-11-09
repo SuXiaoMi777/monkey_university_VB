@@ -1,0 +1,61 @@
+{% extends "frontstage.html" %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+
+{% block title %}個人資料{% endblock title%}
+
+{% block content%}
+<h1 class="page-title mb-3">個人資料</h1>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card card-vb h-100">
+        <div class="card-body">
+            <h5 class="mb-3">基本資料</h5>
+            <table class="table mb-3">
+                <tr><th width="30%">學號</th><td>{{ player.pid }}</td></tr>
+                <tr><th>姓名</th><td>{{ player.pname }}</td></tr>
+                <tr><th>隊伍</th><td>{{ player.teamname }}</td></tr>
+                <tr><th>背號</th><td>{{ player.jerseyno if player.jerseyno is not none else '未指定' }}</td></tr>
+                <tr><th>系所</th><td>{{ player.dname }}</td></tr>
+                <tr><th>場上位置</th><td>{{ player.posname }}</td></tr>
+                <tr><th>入隊日期</th><td>{{ player.joindate }}</td></tr>
+            </table>
+            <p class="small text-muted mb-3">背號、系所、位置如需變更，請聯絡球經。</p>
+
+            <form method="post" class="d-flex gap-2 align-items-end">
+                <div class="flex-fill">
+                    <label class="form-label">聯絡電話</label>
+                    <input type="text" name="phone" value="{{ player.phone or '' }}" class="form-control" maxlength="15">
+                </div>
+                <button type="submit" class="btn btn-success text-nowrap">更新電話</button>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card card-vb h-100">
+        <div class="card-body">
+            <h5 class="mb-3">修改密碼</h5>
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">目前密碼</label>
+                    <input type="password" name="old_password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">新密碼（至少 6 個字元）</label>
+                    <input type="password" name="new_password" class="form-control" minlength="6" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">再輸入一次新密碼</label>
+                    <input type="password" name="confirm_password" class="form-control" minlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary">更新密碼</button>
+            </form>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock content%}

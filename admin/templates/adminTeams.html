@@ -1,0 +1,125 @@
+{% extends "admin.html" %}
+{% block title %}系所與系隊{% endblock title %}
+{% block content %}
+
+<h1 class="page-title mb-3">系所與系隊</h1>
+
+<div class="row g-3">
+    <!-- 系隊 -->
+    <div class="col-lg-7">
+        <div class="card card-vb h-100">
+        <div class="card-body">
+            <h5 class="mb-3">系隊</h5>
+            <form method="post">
+            <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr><th>系所</th><th>隊伍</th><th>組別</th><th class="text-end">在隊球員</th><th class="text-end">活動數</th><th></th></tr>
+                </thead>
+                <tbody>
+                {% for t in teams %}
+                    <tr>
+                        <td>{{ t.dname }}</td>
+                        <td class="fw-bold">{{ t.teamname }}</td>
+                        <td>{{ '男排' if t.tgender == 'M' else '女排' }}</td>
+                        <td class="text-end">{{ t.active_players }}</td>
+                        <td class="text-end">{{ t.event_cnt }}</td>
+                        <td class="text-end">
+                            {% if t.active_players == 0 and t.event_cnt == 0 %}
+                            <button type="submit" name="delete_team" value="{{ t.tid }}" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('確定刪除 {{ t.teamname }} 嗎？')">刪除</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">還沒有系隊</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            </form>
+
+            <h6 class="mt-2">新增系隊</h6>
+            <form method="post" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">系所</label>
+                    <select name="did" id="teamDept" class="form-select" required>
+                        {% for d in departments %}
+                        <option value="{{ d.did }}" data-name="{{ d.dname }}">{{ d.dname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted mb-1">組別</label>
+                    <select name="tgender" id="teamGender" class="form-select">
+                        <option value="M">男排</option>
+                        <option value="F">女排</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">隊伍名稱</label>
+                    <input type="text" name="teamname" id="teamName" class="form-control" maxlength="20" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" name="add_team" value="1" class="btn btn-success w-100">新增</button>
+                </div>
+            </form>
+            <p class="small text-muted mt-2 mb-0">每個系所最多一支男排、一支女排；已有球員或活動的隊伍不能刪除。</p>
+        </div>
+        </div>
+    </div>
+
+    <!-- 系所 -->
+    <div class="col-lg-5">
+        <div class="card card-vb h-100">
+        <div class="card-body">
+            <h5 class="mb-3">系所</h5>
+            <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr><th>代碼</th><th>系所</th><th class="text-end">系隊</th><th class="text-end">球經</th></tr>
+                </thead>
+                <tbody>
+                {% for d in departments %}
+                    <tr>
+                        <td><code>{{ d.did }}</code></td>
+                        <td>{{ d.dname }}<div class="small text-muted">{{ d.college }}</div></td>
+                        <td class="text-end">{{ d.team_cnt }}</td>
+                        <td class="text-end">{{ d.manager_cnt }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            <h6 class="mt-2">新增系所</h6>
+            <form method="post" class="row g-2">
+                <div class="col-4">
+                    <input type="text" name="did" class="form-control" placeholder="代碼 例：ME" maxlength="10" required>
+                </div>
+                <div class="col-8">
+                    <input type="text" name="dname" class="form-control" placeholder="系所名稱" maxlength="30" required>
+                </div>
+                <div class="col-8">
+                    <input type="text" name="college" class="form-control" placeholder="所屬學院" maxlength="30" required>
+                </div>
+                <div class="col-4">
+                    <button type="submit" name="add_department" value="1" class="btn btn-success w-100">新增</button>
+                </div>
+            </form>
+        </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 依系所與組別自動帶入隊伍名稱，例：資訊工程學系 + 男排 → 資訊工程系男排
+    function suggestName() {
+        var dept = $('#teamDept option:selected').data('name') || '';
+        var short = dept.replace(/學系$|系$/, '');
+        $('#teamName').val(short + '系' + $('#teamGender option:selected').text());
+    }
+    $('#teamDept, #teamGender').on('change', suggestName);
+    suggestName();
+</script>
+{% endblock content %}

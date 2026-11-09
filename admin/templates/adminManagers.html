@@ -1,0 +1,73 @@
+{% extends "admin.html" %}
+{% block title %}球經帳號{% endblock title %}
+{% block content %}
+
+<h1 class="page-title mb-3">球經帳號</h1>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card card-vb">
+        <div class="card-body">
+            <p class="text-muted small mb-2">每位球經只能管理自己系所的隊伍、球員與活動。</p>
+            <form method="post">
+            <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr><th>帳號</th><th>名稱</th><th>負責系所</th><th class="text-end">操作</th></tr>
+                </thead>
+                <tbody>
+                {% for m in managers %}
+                    <tr>
+                        <td><code>{{ m.username }}</code></td>
+                        <td>{{ m.aname or '' }}</td>
+                        <td>{{ m.dname }}</td>
+                        <td class="text-end text-nowrap">
+                            <button type="submit" name="reset" value="{{ m.username }}" class="btn btn-outline-primary btn-sm"
+                                onclick="return confirm('確定將 {{ m.username }} 的密碼重設為 manager123 嗎？')">重設密碼</button>
+                            <button type="submit" name="delete" value="{{ m.username }}" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('確定刪除球經帳號 {{ m.username }} 嗎？')">刪除</button>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">還沒有球經帳號</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-vb">
+        <div class="card-body">
+            <h5 class="mb-3">建立球經帳號</h5>
+            <form method="post">
+                <div class="mb-2">
+                    <label class="form-label small text-muted mb-1">帳號</label>
+                    <input type="text" name="username" class="form-control" maxlength="20" placeholder="例：me_manager" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-muted mb-1">名稱</label>
+                    <input type="text" name="aname" class="form-control" maxlength="20" placeholder="例：機械系球經" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-muted mb-1">負責系所</label>
+                    <select name="did" class="form-select" required>
+                        {% for d in departments %}
+                        <option value="{{ d.did }}">{{ d.dname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted mb-1">初始密碼</label>
+                    <input type="text" name="password" class="form-control" placeholder="留空則為 manager123">
+                </div>
+                <button type="submit" name="add_manager" value="1" class="btn btn-success w-100">建立</button>
+            </form>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

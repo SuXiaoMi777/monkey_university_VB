@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{# 系統管理員（體育室）：系所、系隊、球經帳號、場地、全校統計 #}
+
+{% block head %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.1.2/echarts.min.js" integrity="sha512-ppWbHq6q2f7HAwS481w6qikuC0XEeBnmkRg6KWnWg3zSIbJwWWBgsCDMAxzSB7SVqXzWwSYQ2s8TSJKjnaikMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+{% endblock head %}
+
+{% block home_url %}{{ url_for('admin.overview') }}{% endblock home_url %}
+{% block rail_label %}系統管理・全校系隊{% endblock rail_label %}
+{% block brand_sub %}系統管理{% endblock brand_sub %}
+
+{% block nav %}
+    {{ nav_item('admin.overview', '全校總覽') }}
+    {{ nav_item('admin.teams', '系所與系隊') }}
+    {{ nav_item('admin.managers', '球經帳號') }}
+    {{ nav_item('admin.venues', '場地') }}
+{% endblock nav %}

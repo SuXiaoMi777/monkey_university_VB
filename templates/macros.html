@@ -1,0 +1,26 @@
+{# 共用元件 #}
+
+{# 出席狀態標籤 #}
+{% macro status_badge(status) -%}
+  {% if status %}<span class="st st-{{ status }}">{{ status }}</span>{% else %}<span class="text-muted">—</span>{% endif %}
+{%- endmacro %}
+
+{# 時間只顯示到分鐘 #}
+{% macro hm(t) -%}{{ t.strftime('%H:%M') if t else '' }}{%- endmacro %}
+
+{# 日期加上星期 #}
+{% macro day(d) -%}
+  {{ d.strftime('%m/%d') }}（{{ '一二三四五六日'[d.weekday()] }}）
+{%- endmacro %}
+
+{# 提示訊息：views 中 flash(訊息, 'danger' / 'warning')，未指定類別時顯示為成功 #}
+{% macro flashes() -%}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, m in messages %}
+    <div class="alert alert-{{ category if category in ['danger', 'warning', 'info'] else 'success' }} alert-dismissible fade show" role="alert">
+      {{ m }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endwith %}
+{%- endmacro %}

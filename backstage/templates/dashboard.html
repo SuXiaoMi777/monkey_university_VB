@@ -1,0 +1,31 @@
+{% extends "backstage.html" %}
+{% block head %}
+{{ super() }}
+{% endblock head %}
+{% block title %}資料分析{% endblock title%}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end mb-3">
+    <h1 class="page-title mb-0">資料分析</h1>
+    <span class="text-muted">{{ semester }} 學期</span>
+</div>
+
+<!-- 摘要 -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">在隊球員</div><div class="stat-num">{{ overview.active_players }}</div>
+    </div></div>
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">已舉行活動</div><div class="stat-num">{{ overview.held_events }}</div>
+    </div></div>
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">尚未舉行活動</div><div class="stat-num">{{ overview.upcoming_events }}</div>
+    </div></div>
+    <div class="col-6 col-md-3"><div class="card card-vb p-3">
+        <div class="stat-label">全隊平均出席率</div><div class="stat-num">{{ overview.overall_rate or 0 }}<small class="fs-6">%</small></div>
+    </div></div>
+</div>
+
+{% include "_charts.html" %}
+
+{% endblock content %}
