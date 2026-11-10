@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask, render_template
 from flask_login import current_user
 from api.api import api, login_manager
@@ -7,10 +8,12 @@ from backstage.views.analysis import analysis
 from backstage.views.manager import manager
 from admin.views.admin import admin
 from api.sql import Lookup
+load_dotenv()
 
 ## Flask-Login : 確保未登入者不能使用系統
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'Your Key')
+app.secret_key = os.environ['SECRET_KEY']
+app.config.update(SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_HTTPONLY=True)
 
 app.register_blueprint(api, url_prefix='/')
 app.register_blueprint(player, url_prefix='/player')          # 球員前台
@@ -39,5 +42,4 @@ def index():
 
 
 if __name__ == '__main__':
-    app.debug = True
-    app.run()
+    app.run(debug=False)

@@ -1,0 +1,34 @@
+on_http_request:
+  # 1. 防止有人一直猜密碼：同一個 IP 每分鐘最多送出 5 次登入
+  - expressions:
+      - "req.url.path == '/login' && req.method == 'POST'"
+    actions:
+      - type: rate-limit
+        config:
+          name: login-limit
+          algorithm: sliding_window
+          capacity: 5
+          rate: 60s
+          bucket_key:
+            - conn.client_ip
+
+  # 2. 整個網站：同一個 IP 每分鐘最多 90 次請求，擋掉大量灌請求
+  - actions:
+      - type: rate-limit
+        config:
+          name: site-limit
+          algorithm: sliding_window
+          capacity: 90
+          rate: 60s
+          bucket_key:
+            - conn.client_ip
+
+on_http_response:
+  # 3. 加上瀏覽器安全標頭：禁止被別的網站嵌入、禁止瀏覽器猜測檔案類型
+  - actions:
+      - type: add-headers
+        config:
+          headers:
+            X-Frame-Options: "DENY"
+            X-Content-Type-Options: "nosniff"
+            Referrer-Policy: "same-origin"
