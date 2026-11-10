@@ -38,10 +38,20 @@ def teams():
                 Admin.create_team(form['teamname'].strip(), form['tgender'], form['did'])
                 flash(f'已新增隊伍：{form["teamname"].strip()}')
             elif 'delete_team' in form:
-                if Admin.delete_team(form['delete_team']):
-                    flash('已刪除隊伍')
-                else:
-                    flash('這支隊伍已經有球員或活動，不能刪除', 'warning')
+                team = next((t for t in Admin.teams() if str(t['tid']) == form['delete_team']), None)
+                if team:
+                    Admin.delete_team(team['tid'])
+                    flash(f'已刪除 {team["teamname"]}，連同 {team["player_cnt"]} 位球員、'
+                          f'{team["event_cnt"]} 場活動、{team["record_cnt"]} 筆出席紀錄')
+            elif 'delete_department' in form:
+                dept = next((d for d in Admin.departments() if d['did'] == form['delete_department']), None)
+                if dept:
+                    Admin.delete_department(dept['did'])
+                    msg = (f'已刪除 {dept["dname"]}，連同 {dept["team_cnt"]} 支系隊、{dept["player_cnt"]} 位球員、'
+                           f'{dept["event_cnt"]} 場活動、{dept["manager_cnt"]} 個球經帳號')
+                    if dept['outside_cnt']:
+                        msg += f'；另有 {dept["outside_cnt"]} 位在其他系隊的同學，就讀系所已改為未填寫'
+                    flash(msg)
         except psycopg2.Error as e:
             flash('操作失敗：' + db_error_message(e), 'danger')
         return redirect(url_for('admin.teams'))

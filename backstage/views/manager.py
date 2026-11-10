@@ -116,7 +116,7 @@ def editPlayer():                                            # F5 球員異動
             'pname': form['pname'].strip(),
             'phone': none_if_empty(form.get('phone')),
             'jerseyno': none_if_empty(form.get('jerseyno')),
-            'did': form['did'],
+            'did': none_if_empty(form.get('did')),
             'posid': none_if_empty(form.get('posid')),
         }
         try:

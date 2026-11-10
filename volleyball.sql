@@ -77,9 +77,10 @@ CREATE TABLE Venue (
 -- ---------------------------------------------------------------------
 -- 5. 球員
 --    Belong（Team 1:N Player，完全參與）→ tId NOT NULL
---    Enroll（Department 1:N Player，完全參與）→ dId NOT NULL
+--    Enroll（Department 1:N Player，部分參與）→ dId 可為 NULL
 --      這裡的 dId 是球員「就讀」的系所；隊伍所屬系所記錄在 Team.dId，
---      兩者通常相同，但允許雙主修、輔系等外系同學加入系隊
+--      兩者通常相同，但允許雙主修、輔系等外系同學加入系隊。
+--      系統管理員刪除某個系所時，其他系隊中就讀該系的同學 dId 改為 NULL（未填寫）
 --    Play（Position 1:N Player，部分參與）→ posId 可為 NULL
 -- ---------------------------------------------------------------------
 CREATE TABLE Player (
@@ -93,7 +94,7 @@ CREATE TABLE Player (
                             CHECK (pStatus IN ('在隊', '退隊', '畢業')),
     leaveDate  DATE,
     tId        INT          NOT NULL REFERENCES Team(tId)       ON UPDATE CASCADE ON DELETE RESTRICT,
-    dId        VARCHAR(10)  NOT NULL REFERENCES Department(dId) ON UPDATE CASCADE ON DELETE RESTRICT,
+    dId        VARCHAR(10)           REFERENCES Department(dId) ON UPDATE CASCADE ON DELETE RESTRICT,
     posId      VARCHAR(5)            REFERENCES Position(posId) ON UPDATE CASCADE ON DELETE SET NULL,
     -- 在隊時不可有離隊日期；退隊或畢業時必須有離隊日期
     CONSTRAINT chk_player_leave CHECK (
@@ -258,9 +259,7 @@ RESET client_min_messages;  -- 恢復提示訊息，讓後面的測試結果能�
 -- 02_seed.sql：示範資料（由 gen_seed.py 產生）
 -- 學期 115-1；出席紀錄產生到 2026-11-04，之後的活動尚未點名
 -- 示範帳號：系統管理員 admin / admin123
---           球經 cs_manager
---                oe_manager
---                ee_manager / manager123
+--           球經 cs_manager、oe_manager、ee_manager / manager123
 --           球員帳號＝學號，密碼 player123
 -- =====================================================================
 BEGIN;
@@ -1680,12 +1679,33 @@ SELECT d.dId, d.dName,
 FROM Department d
 ORDER BY d.college, d.dId;
 
--- 刪除系隊：只有沒有球員、也沒有活動的隊伍能刪除
-DELETE FROM Team t
-WHERE t.teamName = '機械系男排'
-  AND NOT EXISTS (SELECT 1 FROM Player p WHERE p.tId = t.tId)
-  AND NOT EXISTS (SELECT 1 FROM Event e  WHERE e.tId = t.tId)
-RETURNING teamName;
+-- 刪除系隊（以電機系男排 tId = 5 示範）：連同它的所有資料，依外鍵相依的反向順序刪除
+--   外鍵設為 RESTRICT，所以一定要先刪「被參照」的下層資料；整段放在同一個交易中
+DELETE FROM Attendance WHERE eId IN (SELECT eId FROM Event WHERE tId = 5);
+DELETE FROM Event  WHERE tId = 5;
+DELETE FROM Player WHERE tId = 5;          -- 球員帳號因 Account.pId ON DELETE CASCADE 一併刪除
+DELETE FROM Team   WHERE tId = 5 RETURNING teamName;
+
+-- 刪除前先查影響範圍（系統管理員畫面的確認視窗用）
+SELECT d.dName,
+       (SELECT COUNT(*) FROM Team t WHERE t.dId = d.dId)                         AS team_cnt,
+       (SELECT COUNT(*) FROM Player p JOIN Team t ON t.tId = p.tId
+         WHERE t.dId = d.dId)                                                    AS player_cnt,
+       (SELECT COUNT(*) FROM Account a WHERE a.dId = d.dId)                      AS manager_cnt,
+       (SELECT COUNT(*) FROM Player p JOIN Team t ON t.tId = p.tId
+         WHERE p.dId = d.dId AND t.dId <> d.dId)                                 AS outside_cnt
+FROM Department d
+WHERE d.dId = 'IM';
+
+-- 刪除系所（以資管系 'IM' 示範）：
+--   該系的系隊與其資料全部刪除；就讀此系但在其他系隊的同學保留，就讀系所改為 NULL
+DELETE FROM Attendance WHERE eId IN (SELECT eId FROM Event WHERE tId IN (SELECT tId FROM Team WHERE dId = 'IM'));
+DELETE FROM Event  WHERE tId IN (SELECT tId FROM Team WHERE dId = 'IM');
+DELETE FROM Player WHERE tId IN (SELECT tId FROM Team WHERE dId = 'IM');
+DELETE FROM Team   WHERE dId = 'IM';
+UPDATE Player SET dId = NULL WHERE dId = 'IM' RETURNING pId, pName, tId;   -- 光電系女排的雙主修同學
+DELETE FROM Account WHERE role = 'manager' AND dId = 'IM';
+DELETE FROM Department WHERE dId = 'IM' RETURNING dName;
 
 -- 新增場地
 INSERT INTO Venue (vName, location) VALUES ('風雨球場', '宿舍區');

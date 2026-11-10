@@ -233,11 +233,12 @@ class Player:
     def search(scope, tid=None, did=None, posid=None, status='在隊'):
         sql = f'''
             SELECT p.pId, p.pName, p.gender, p.phone, p.joinDate, p.jerseyNo,
-                   p.pStatus, p.leaveDate, p.tId, t.teamName, p.dId, d.dName,
+                   p.pStatus, p.leaveDate, p.tId, t.teamName, p.dId,
+                   COALESCE(d.dName, '未填寫') AS dName,
                    p.posId, COALESCE(pos.posName, '未指定') AS posName
             FROM Player p
             JOIN Team t            ON t.tId = p.tId
-            JOIN Department d      ON d.dId = p.dId
+            LEFT JOIN Department d ON d.dId = p.dId
             LEFT JOIN Position pos ON pos.posId = p.posId
             WHERE {SCOPE_T}
               AND (%(tid)s::int IS NULL       OR p.tId = %(tid)s)
@@ -253,10 +254,11 @@ class Player:
     def get_player(pid, scope=None):
         """取得單一球員；不在球經管理範圍內時回傳 None。"""
         sql = f'''
-            SELECT p.*, t.teamName, d.dName, COALESCE(pos.posName, '未指定') AS posName
+            SELECT p.*, t.teamName, COALESCE(d.dName, '未填寫') AS dName,
+                   COALESCE(pos.posName, '未指定') AS posName
             FROM Player p
             JOIN Team t            ON t.tId = p.tId
-            JOIN Department d      ON d.dId = p.dId
+            LEFT JOIN Department d ON d.dId = p.dId
             LEFT JOIN Position pos ON pos.posId = p.posId
             WHERE p.pId = %(pid)s AND {SCOPE_T}
         '''
@@ -620,14 +622,19 @@ class Analysis:
 # 系統管理員：系所、隊伍、球經帳號、場地
 # =====================================================================
 class Admin:
+    # 系所列表，附上刪除時會一併影響的筆數（顯示在確認視窗）
     @staticmethod
     def departments():
         sql = '''
             SELECT d.dId, d.college, d.dName,
-                   (SELECT COUNT(*) FROM Team t WHERE t.dId = d.dId)        AS team_cnt,
-                   (SELECT COUNT(*) FROM Account a WHERE a.dId = d.dId)     AS manager_cnt,
-                   (SELECT COUNT(*) FROM Player p WHERE p.dId = d.dId
-                       AND p.pStatus = '在隊')                              AS student_cnt
+                   (SELECT COUNT(*) FROM Team t WHERE t.dId = d.dId)                   AS team_cnt,
+                   (SELECT COUNT(*) FROM Account a WHERE a.dId = d.dId)                AS manager_cnt,
+                   (SELECT COUNT(*) FROM Player p JOIN Team t ON t.tId = p.tId
+                     WHERE t.dId = d.dId)                                              AS player_cnt,
+                   (SELECT COUNT(*) FROM Event e JOIN Team t ON t.tId = e.tId
+                     WHERE t.dId = d.dId)                                              AS event_cnt,
+                   (SELECT COUNT(*) FROM Player p JOIN Team t ON t.tId = p.tId
+                     WHERE p.dId = d.dId AND t.dId <> d.dId)                           AS outside_cnt
             FROM Department d
             ORDER BY d.college, d.dId
         '''
@@ -638,12 +645,34 @@ class Admin:
         sql = 'INSERT INTO Department (dId, college, dName) VALUES (%s, %s, %s)'
         DB.execute_input(sql, (did, college, dname))
 
+    # 刪除系所與它的所有資料，全部在同一個交易中完成，任何一步失敗就全部取消：
+    #   1. 該系所系隊的出席紀錄  2. 活動  3. 球員（球員帳號因 ON DELETE CASCADE 一併刪除）
+    #   4. 系隊  5. 其他系隊中就讀這個系的同學，就讀系所改為未填寫（NULL）
+    #   6. 這個系所的球經帳號  7. 系所本身
+    @staticmethod
+    def delete_department(did):
+        p = {'did': did}
+        team_ids = 'SELECT tId FROM Team WHERE dId = %(did)s'
+        DB.transaction([
+            (f'DELETE FROM Attendance WHERE eId IN (SELECT eId FROM Event WHERE tId IN ({team_ids}))', p),
+            (f'DELETE FROM Event  WHERE tId IN ({team_ids})', p),
+            (f'DELETE FROM Player WHERE tId IN ({team_ids})', p),
+            ('DELETE FROM Team   WHERE dId = %(did)s', p),
+            ('UPDATE Player SET dId = NULL WHERE dId = %(did)s', p),
+            ("DELETE FROM Account WHERE role = 'manager' AND dId = %(did)s", p),
+            ('DELETE FROM Department WHERE dId = %(did)s', p),
+        ])
+
+    # 系隊列表，附上刪除時會一併影響的筆數
     @staticmethod
     def teams():
         sql = '''
             SELECT t.tId, t.teamName, t.tGender, t.dId, d.dName,
-                   COUNT(p.pId) FILTER (WHERE p.pStatus = '在隊') AS active_players,
-                   (SELECT COUNT(*) FROM Event e WHERE e.tId = t.tId) AS event_cnt
+                   COUNT(p.pId) FILTER (WHERE p.pStatus = '在隊')               AS active_players,
+                   COUNT(p.pId)                                                  AS player_cnt,
+                   (SELECT COUNT(*) FROM Event e WHERE e.tId = t.tId)            AS event_cnt,
+                   (SELECT COUNT(*) FROM Attendance a JOIN Event e ON e.eId = a.eId
+                     WHERE e.tId = t.tId)                                        AS record_cnt
             FROM Team t
             JOIN Department d    ON d.dId = t.dId
             LEFT JOIN Player p   ON p.tId = t.tId
@@ -657,16 +686,19 @@ class Admin:
         sql = 'INSERT INTO Team (teamName, tGender, dId) VALUES (%s, %s, %s)'
         DB.execute_input(sql, (team_name, gender, did))
 
-    # 只有沒有球員、也沒有活動的隊伍可以刪除（外鍵 RESTRICT 會擋下其他情況）
+    # 刪除系隊與它的所有資料（同一個交易）：
+    #   1. 出席紀錄  2. 活動  3. 球員（帳號隨球員刪除）  4. 系隊本身
+    #   外鍵維持 RESTRICT，所以一般操作（例：球經刪除活動）仍會保護歷史紀錄；
+    #   只有系統管理員透過這個函式，依順序明確地刪除。
     @staticmethod
     def delete_team(tid):
-        sql = '''
-            DELETE FROM Team t
-            WHERE t.tId = %s
-              AND NOT EXISTS (SELECT 1 FROM Player p WHERE p.tId = t.tId)
-              AND NOT EXISTS (SELECT 1 FROM Event e WHERE e.tId = t.tId)
-        '''
-        return DB.execute_input(sql, (tid,))
+        p = {'tid': tid}
+        DB.transaction([
+            ('DELETE FROM Attendance WHERE eId IN (SELECT eId FROM Event WHERE tId = %(tid)s)', p),
+            ('DELETE FROM Event  WHERE tId = %(tid)s', p),
+            ('DELETE FROM Player WHERE tId = %(tid)s', p),
+            ('DELETE FROM Team   WHERE tId = %(tid)s', p),
+        ])
 
     @staticmethod
     def managers():

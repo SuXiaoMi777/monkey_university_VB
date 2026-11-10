@@ -34,7 +34,8 @@
       <tr>
         <th>系所（轉系）</th>
         <td>
-          <select class="form-select" name="did" required>
+          <select class="form-select" name="did">
+            <option value="" {{ 'selected' if not data.did }}>未填寫</option>
             {% for d in departments %}
             <option value="{{ d.did }}" {{ 'selected' if d.did == data.did }}>{{ d.college }}／{{ d.dname }}</option>
             {% endfor %}

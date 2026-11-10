@@ -25,10 +25,16 @@
                         <td class="text-end">{{ t.active_players }}</td>
                         <td class="text-end">{{ t.event_cnt }}</td>
                         <td class="text-end">
-                            {% if t.active_players == 0 and t.event_cnt == 0 %}
-                            <button type="submit" name="delete_team" value="{{ t.tid }}" class="btn btn-outline-danger btn-sm"
-                                onclick="return confirm('確定刪除 {{ t.teamname }} 嗎？')">刪除</button>
-                            {% endif %}
+                            <button type="submit" name="delete_team" value="{{ t.tid }}" class="btn btn-outline-danger btn-sm js-confirm"
+                                data-message="確定刪除「{{ t.teamname }}」嗎？{% if t.player_cnt or t.event_cnt %}
+
+將一併刪除：
+・{{ t.player_cnt }} 位球員（含登入帳號）
+・{{ t.event_cnt }} 場活動
+・{{ t.record_cnt }} 筆出席紀錄{% endif %}
+
+刪除後無法復原。"
+                                {% if t.player_cnt or t.event_cnt %}data-type="{{ t.teamname }}"{% endif %}>刪除</button>
                         </td>
                     </tr>
                 {% else %}
@@ -64,7 +70,7 @@
                     <button type="submit" name="add_team" value="1" class="btn btn-success w-100">新增</button>
                 </div>
             </form>
-            <p class="small text-muted mt-2 mb-0">每個系所最多一支男排、一支女排；已有球員或活動的隊伍不能刪除。</p>
+            <p class="small text-muted mt-2 mb-0">每個系所最多一支男排、一支女排。刪除系隊會一併刪除它的球員、活動與出席紀錄。</p>
         </div>
         </div>
     </div>
@@ -74,10 +80,11 @@
         <div class="card card-vb h-100">
         <div class="card-body">
             <h5 class="mb-3">系所</h5>
+            <form method="post">
             <div class="table-responsive">
             <table class="table align-middle">
                 <thead>
-                    <tr><th>代碼</th><th>系所</th><th class="text-end">系隊</th><th class="text-end">球經</th></tr>
+                    <tr><th>代碼</th><th>系所</th><th class="text-end">系隊</th><th class="text-end">球經</th><th></th></tr>
                 </thead>
                 <tbody>
                 {% for d in departments %}
@@ -86,11 +93,27 @@
                         <td>{{ d.dname }}<div class="small text-muted">{{ d.college }}</div></td>
                         <td class="text-end">{{ d.team_cnt }}</td>
                         <td class="text-end">{{ d.manager_cnt }}</td>
+                        <td class="text-end">
+                            <button type="submit" name="delete_department" value="{{ d.did }}" class="btn btn-outline-danger btn-sm js-confirm"
+                                data-message="確定刪除「{{ d.dname }}」嗎？{% if d.team_cnt or d.manager_cnt or d.outside_cnt %}
+
+將一併刪除：
+・{{ d.team_cnt }} 支系隊
+・{{ d.player_cnt }} 位球員（含登入帳號）
+・{{ d.event_cnt }} 場活動與出席紀錄
+・{{ d.manager_cnt }} 個球經帳號{% if d.outside_cnt %}
+
+另有 {{ d.outside_cnt }} 位在其他系隊的同學就讀此系，他們不會被刪除，就讀系所會改為「未填寫」。{% endif %}{% endif %}
+
+刪除後無法復原。"
+                                {% if d.team_cnt or d.manager_cnt %}data-type="{{ d.did }}"{% endif %}>刪除</button>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
             </div>
+            </form>
 
             <h6 class="mt-2">新增系所</h6>
             <form method="post" class="row g-2">
@@ -113,6 +136,17 @@
 </div>
 
 <script>
+    // 刪除前確認：有資料會被一併刪除時，要輸入隊伍名稱或系所代碼才會送出，避免誤按
+    $('.js-confirm').on('click', function () {
+        var msg = $(this).data('message');
+        var need = $(this).data('type');
+        if (need === undefined) return confirm(msg);
+        var typed = prompt(msg + '\n\n請輸入「' + need + '」確認刪除：');
+        if (typed === null) return false;
+        if (String(typed).trim() !== String(need)) { alert('輸入不符，已取消刪除。'); return false; }
+        return true;
+    });
+
     // 依系所與組別自動帶入隊伍名稱，例：資訊工程學系 + 男排 → 資訊工程系男排
     function suggestName() {
         var dept = $('#teamDept option:selected').data('name') || '';
